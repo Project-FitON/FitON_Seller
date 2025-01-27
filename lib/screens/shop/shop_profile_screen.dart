@@ -1,0 +1,1 @@
+// Shop settings and social links.

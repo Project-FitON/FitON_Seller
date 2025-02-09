@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fiton_seller/screens/nav/nav_screen.dart';
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
 

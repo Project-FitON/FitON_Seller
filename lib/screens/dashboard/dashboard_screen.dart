@@ -1,4 +1,3 @@
-import 'package:fiton_seller/screens/nav/nav_screen.dart';
 import 'package:flutter/material.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -169,7 +168,7 @@ class DashboardScreen extends StatelessWidget {
               const Spacer(),
               Text(
                 growth,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.green,
                   fontSize: 12,
                 ),

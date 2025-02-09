@@ -20,4 +20,3 @@ class MyApp extends StatelessWidget {
       home: const NavScreen(),  // ✅ Set NavScreen as the home screen
     );
   }
-}

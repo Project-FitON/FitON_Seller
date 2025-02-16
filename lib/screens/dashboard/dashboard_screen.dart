@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'wishlist_screen.dart';
+import 'products_screen.dart';
+import 'sales_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -84,29 +87,32 @@ class DashboardScreen extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: _buildQuickActionCard(
+                    child: _buildQuickActionButton(
                       'Wishlist',
                       Icons.favorite,
                       Colors.deepPurple,
                       true,
+                      context,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildQuickActionCard(
+                    child: _buildQuickActionButton(
                       'Products',
                       Icons.shopping_cart,
                       Colors.white,
                       false,
+                      context,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildQuickActionCard(
+                    child: _buildQuickActionButton(
                       'Sales',
                       Icons.attach_money,
                       Colors.white,
                       false,
+                      context,
                     ),
                   ),
                 ],
@@ -125,7 +131,6 @@ class DashboardScreen extends StatelessWidget {
           ),
         ),
       ),
-
     );
   }
 
@@ -180,20 +185,34 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionCard(String title, IconData icon, Color color, bool hasBadge) {
-    final isLight = color == Colors.white;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+  Widget _buildQuickActionButton(String title, IconData icon, Color color, bool hasBadge, BuildContext context) {
+    return ElevatedButton(
+      onPressed: () {
+        // Navigate to the respective screen based on the title
+        if (title == 'Wishlist') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const WishlistScreen()),
+          );
+        } else if (title == 'Products') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ProductsScreen()),
+          );
+        } else if (title == 'Sales') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SalesScreen()),
+          );
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color, // background color
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.all(16),
+        elevation: 5, // shadow effect
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -202,7 +221,7 @@ class DashboardScreen extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: isLight ? Colors.black : Colors.white,
+                color: color == Colors.white ? Colors.black : Colors.white,
                 size: 24,
               ),
               if (hasBadge)
@@ -230,7 +249,7 @@ class DashboardScreen extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: isLight ? Colors.black : Colors.white,
+              color: color == Colors.white ? Colors.black : Colors.white,
               fontSize: 12,
             ),
           ),

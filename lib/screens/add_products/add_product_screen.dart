@@ -1,234 +1,170 @@
 import 'package:flutter/material.dart';
-class AddProductScreen extends StatefulWidget {
+import 'package:fiton_seller/screens/nav/side_menu.dart';
+
+class AddProductScreen extends StatelessWidget {
   const AddProductScreen({super.key});
-
-  @override
-  State<AddProductScreen> createState() => _AddProductScreenState();
-}
-
-class _AddProductScreenState extends State<AddProductScreen> {
-  String? selectedSize;
-  int? selectedColor;
-  final List<String> sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
-  final List<Map<String, dynamic>> colors = [
-    {'id': 1, 'color': const Color(0xFF8B0000)},
-    {'id': 2, 'color': const Color(0xFF006400)},
-    {'id': 3, 'color': const Color(0xFF00008B)},
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: _buildMainContent(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      height: 120,
-      decoration: const BoxDecoration(
-        color: Color(0xFF2D0C57),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF4A148C),
+        title: const Text(
+          'Add Product',
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context); // Pops the screen when the back button is pressed
+          },
         ),
       ),
-      child: const SafeArea(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.only(top: 20),
-            child: Text(
-              'ADD PRODUCT',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  const SizedBox(height: 20),
+
+                  // Main Photo Container
+                  Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey.withOpacity(0.5),
+                        width: 1,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.camera_alt_outlined,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Main Photo',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Garment Title TextField
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Garment Title',
+                        hintStyle: TextStyle(color: Colors.grey),
+                        border: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Colors & Photos Section
+                  const Text(
+                    'Colors & Photos',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Color Circles with Photos
+                  Row(
+                    children: [
+                      _buildColorWithPhoto(Colors.red, 'assets/red_garment.jpg'),
+                      const SizedBox(width: 15),
+                      _buildColorWithPhoto(Colors.green, 'assets/green_garment.jpg'),
+                      const SizedBox(width: 15),
+                      _buildColorWithPhoto(Colors.blue, 'assets/blue_garment.jpg'),
+                    ],
+                  ),
+
+                  const Spacer(),
+
+                  // Bottom Action Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      FloatingActionButton(
+                        heroTag: 'camera',
+                        onPressed: () {},
+                        backgroundColor: const Color(0xFF4A148C),
+                        child: const Icon(Icons.camera_alt),
+                      ),
+                      const SizedBox(width: 16),
+                      FloatingActionButton(
+                        heroTag: 'gallery',
+                        onPressed: () {},
+                        backgroundColor: const Color(0xFF4A148C),
+                        child: const Icon(Icons.photo_library),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMainContent() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildImageUploader(),
-          const SizedBox(height: 20),
-          _buildColorSelector(),
-          const SizedBox(height: 20),
-          _buildTitleInput(),
-          const SizedBox(height: 20),
-          _buildSizeSelector(),
+          // Positioned the side menu at the left bottom corner
+          const Positioned(
+            bottom: 0,
+            left: 0,
+            child: SideMenuBar(),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildImageUploader() {
-    return GestureDetector(
-      onTap: () {
-        // TODO: Implement image picker
-      },
-      child: Container(
-        height: 200,
-        width: 200,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300, width: 2),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.camera_alt, size: 40, color: Colors.grey),
-            SizedBox(height: 8),
-            Text('Main Photo'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildColorSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Colors',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 15,
-          runSpacing: 15,
-          children: [
-            ...colors.map((color) => _buildColorItem(color)),
-            _buildAddColorButton(),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildColorItem(Map<String, dynamic> color) {
+  Widget _buildColorWithPhoto(Color color, String imagePath) {
     return Column(
       children: [
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              selectedColor = color['id'];
-            });
-          },
-          child: Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: color['color'],
-              shape: BoxShape.circle,
-              border: selectedColor == color['id']
-                  ? Border.all(color: Colors.white, width: 2)
-                  : null,
+        Container(
+          height: 40,
+          width: 40,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 60,
+          width: 60,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              imagePath,
+              fit: BoxFit.cover,
             ),
           ),
         ),
-        const SizedBox(height: 5),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color['color'].withOpacity(0.3),
-            borderRadius: BorderRadius.circular(5),
-          ),
-        ),
       ],
-    );
-  }
-
-  Widget _buildAddColorButton() {
-    return GestureDetector(
-      onTap: () {
-        // TODO: Implement add color functionality
-      },
-      child: Container(
-        width: 30,
-        height: 30,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.grey),
-        ),
-        child: const Icon(Icons.add, size: 20),
-      ),
-    );
-  }
-
-  Widget _buildTitleInput() {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Garment Title',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
-        ),
-        TextField(
-          decoration: InputDecoration(border: UnderlineInputBorder()),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSizeSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Sizes Available',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: sizes.map((size) => _buildSizeButton(size)).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSizeButton(String size) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedSize = size;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: selectedSize == size ? const Color(0xFF2D0C57) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selectedSize == size ? const Color(0xFF2D0C57) : Colors.grey.shade300,
-          ),
-        ),
-        child: Text(
-          size,
-          style: TextStyle(
-            color: selectedSize == size ? Colors.white : Colors.grey,
-          ),
-        ),
-      ),
     );
   }
 }

@@ -1,4 +1,3 @@
-import 'package:fiton_seller/screens/nav/nav_screen.dart';
 import 'package:flutter/material.dart';
 import 'wishlist_screen.dart';
 import 'products_screen.dart';

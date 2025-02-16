@@ -1,6 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:fiton_seller/screens/add_products/add_product_screen.dart';
 import 'package:fiton_seller/screens/dashboard/dashboard_screen.dart';
-import 'package:flutter/material.dart';
 
 class NavScreen extends StatefulWidget {
   const NavScreen({super.key});
@@ -16,12 +16,13 @@ class _NavScreenState extends State<NavScreen> {
     const DashboardScreen(),
     const Center(child: Text('Orders')),
     const Center(child: Text('Income')),
-    const Center(child: Text('Shop')),
+    const Center(child: Text('store')),
+
   ];
 
   void _onItemTapped(int index) {
     if (index == 2) {
-      // ✅ Navigate to AddProductScreen when clicking the Add button
+      // Open AddProductScreen without affecting the nav state
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const AddProductScreen()),

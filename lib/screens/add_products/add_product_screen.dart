@@ -8,7 +8,7 @@ class AddProductScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF4A148C),
+        backgroundColor: const Color(0xFF1B0331),
         title: const Text(
           'Add Product',
           style: TextStyle(color: Colors.white),

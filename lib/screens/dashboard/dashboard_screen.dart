@@ -1,3 +1,4 @@
+import 'package:fiton_seller/screens/shop/notification_screen.dart';
 import 'package:flutter/material.dart';
 import 'wishlist_screen.dart';
 import 'products_screen.dart';
@@ -51,7 +52,12 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.notifications),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -65,7 +71,7 @@ class DashboardScreen extends StatelessWidget {
                       'Orders',
                       '284',
                       '+8.4%',
-                      Colors.deepPurple,
+                      const Color(0xFF1B0331),
                       Icons.shopping_bag,
                     ),
                   ),
@@ -90,7 +96,7 @@ class DashboardScreen extends StatelessWidget {
                     child: _buildQuickActionButton(
                       'Wishlist',
                       Icons.favorite,
-                      Colors.deepPurple,
+                      const Color(0xFF1B0331),
                       true,
                       context,
                     ),
@@ -274,7 +280,7 @@ class DashboardScreen extends StatelessWidget {
           child: Text(
             action,
             style: const TextStyle(
-              color: Colors.deepPurple,
+              color: Color(0xFF1B0331),
             ),
           ),
         ),

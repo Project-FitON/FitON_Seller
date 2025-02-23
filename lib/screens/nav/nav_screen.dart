@@ -1,3 +1,4 @@
+import 'package:fiton_seller/screens/income/income_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fiton_seller/screens/add_products/add_product_screen.dart';
 import 'package:fiton_seller/screens/dashboard/dashboard_screen.dart';
@@ -16,7 +17,7 @@ class _NavScreenState extends State<NavScreen> {
     const DashboardScreen(),
     const Center(child: Text('Orders')),
     const Center(child: Text('Income')),
-    const Center(child: Text('store')),
+    const IncomeScreen(),
 
   ];
 
@@ -54,7 +55,7 @@ class _NavScreenState extends State<NavScreen> {
           onTap: _onItemTapped,
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
-          selectedItemColor: Colors.deepPurple,
+          selectedItemColor: const Color(0xFF1B0331),
           unselectedItemColor: Colors.grey,
           items: [
             const BottomNavigationBarItem(
@@ -68,7 +69,7 @@ class _NavScreenState extends State<NavScreen> {
             BottomNavigationBarItem(
               icon: Container(
                 decoration: const BoxDecoration(
-                  color: Colors.deepPurple,
+                  color: Color(0xFF1B0331),
                   shape: BoxShape.circle,
                 ),
                 padding: const EdgeInsets.all(12),

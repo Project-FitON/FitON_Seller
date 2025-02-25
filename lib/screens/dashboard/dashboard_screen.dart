@@ -1,10 +1,120 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'wishlist_screen.dart';
 import 'products_screen.dart';
 import 'sales_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key, required String shopId});
+
+  @override
+  _DashboardScreenState createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final supabase = Supabase.instance.client;
+  String shopName = "Loading...";
+  int followersCount = 0;
+  int orderCount = 0;
+  int reviewCount = 0;
+  String latestOrder = "No recent orders";
+  String latestReview = "No recent reviews";
+
+  @override
+  void initState() {
+    super.initState();
+    fetchShopDetails();
+  }
+
+  Future<void> fetchShopDetails() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    final response = await supabase
+        .from('shops')
+        .select('name, id')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+
+    if (response != null && mounted) {
+      setState(() {
+        shopName = response['name'];
+      });
+
+      fetchFollowersCount(response['id']);
+      fetchOrderAndReviewCounts(response['id']);
+      fetchLatestOrder(response['id']);
+      fetchLatestReview(response['id']);
+    }
+  }
+
+  Future<void> fetchFollowersCount(String shopId) async {
+    final response = await supabase
+        .from('followers')
+        .select()
+        .eq('shop_id', shopId);
+
+    if (mounted) {
+      setState(() {
+        followersCount = response.length;
+      });
+    }
+  }
+
+  Future<void> fetchOrderAndReviewCounts(String shopId) async {
+    final orderResponse = await supabase
+        .from('orders')
+        .select()
+        .eq('shop_id', shopId);
+
+    final reviewResponse = await supabase
+        .from('reviews')
+        .select()
+        .eq('shop_id', shopId);
+
+    if (mounted) {
+      setState(() {
+        orderCount = orderResponse.length;
+        reviewCount = reviewResponse.length;
+      });
+    }
+  }
+
+  Future<void> fetchLatestOrder(String shopId) async {
+    final response = await supabase
+        .from('orders')
+        .select('customer_name, created_at')
+        .eq('shop_id', shopId)
+        .order('created_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+
+    if (mounted) {
+      setState(() {
+        latestOrder = response != null
+            ? "Order from ${response['customer_name']}"
+            : "No recent orders";
+      });
+    }
+  }
+
+  Future<void> fetchLatestReview(String shopId) async {
+    final response = await supabase
+        .from('reviews')
+        .select('review_text, created_at')
+        .eq('shop_id', shopId)
+        .order('created_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+
+    if (mounted) {
+      setState(() {
+        latestReview = response != null
+            ? response['review_text']
+            : "No recent reviews";
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,40 +129,19 @@ class DashboardScreen extends StatelessWidget {
               // Profile Header
               Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 25,
-                    backgroundColor: Colors.grey,
-                  ),
+                  const CircleAvatar(radius: 25, backgroundColor: Colors.grey),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'My Fashion',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '174 Followers',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
-                          ),
-                        ),
+                        Text(shopName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        Text('$followersCount Followers', style: TextStyle(color: Colors.grey[600], fontSize: 14)),
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.settings),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.notifications),
-                    onPressed: () {},
-                  ),
+                  IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
+                  IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
                 ],
               ),
               const SizedBox(height: 24),
@@ -60,73 +149,33 @@ class DashboardScreen extends StatelessWidget {
               // Stats Row
               Row(
                 children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Orders',
-                      '284',
-                      '+8.4%',
-                      Colors.deepPurple,
-                      Icons.shopping_bag,
-                    ),
-                  ),
+                  Expanded(child: _buildStatCard('Orders', '$orderCount', Colors.deepPurple, Icons.shopping_bag)),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Reviews',
-                      '567',
-                      '+12.8%',
-                      Colors.white,
-                      Icons.star,
-                    ),
-                  ),
+                  Expanded(child: _buildStatCard('Reviews', '$reviewCount', Colors.white, Icons.star)),
                 ],
               ),
               const SizedBox(height: 16),
 
-              // Quick Actions Row
+              // Quick Actions
               Row(
                 children: [
-                  Expanded(
-                    child: _buildQuickActionButton(
-                      'Wishlist',
-                      Icons.favorite,
-                      Colors.deepPurple,
-                      true,
-                      context,
-                    ),
-                  ),
+                  Expanded(child: _buildQuickActionButton('Wishlist', Icons.favorite, context, const WishlistScreen())),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildQuickActionButton(
-                      'Products',
-                      Icons.shopping_cart,
-                      Colors.white,
-                      false,
-                      context,
-                    ),
-                  ),
+                  Expanded(child: _buildQuickActionButton('Products', Icons.shopping_cart, context, const ProductsScreen())),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildQuickActionButton(
-                      'Sales',
-                      Icons.attach_money,
-                      Colors.white,
-                      false,
-                      context,
-                    ),
-                  ),
+                  Expanded(child: _buildQuickActionButton('Sales', Icons.attach_money, context, const SalesScreen())),
                 ],
               ),
               const SizedBox(height: 24),
 
-              // Recent Orders Section
-              _buildSectionHeader('Recent Orders', 'View All'),
-              _buildOrdersList(),
-              const SizedBox(height: 24),
+              // Recent Orders & Latest Reviews
+              _buildSectionTitle("Recent Orders"),
+              _buildTextRow(latestOrder),
 
-              // Latest Reviews Section
-              _buildSectionHeader('Latest Reviews', 'View All'),
-              _buildReviewCard(),
+              const SizedBox(height: 16),
+
+              _buildSectionTitle("Latest Reviews"),
+              _buildTextRow(latestReview),
             ],
           ),
         ),
@@ -134,50 +183,23 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, String growth, Color color, IconData icon) {
-    final isLight = color == Colors.white;
+  Widget _buildStatCard(String title, String value, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: isLight ? Colors.black : Colors.white,
-              fontSize: 14,
-            ),
-          ),
+          Text(title, style: TextStyle(color: color == Colors.white ? Colors.black : Colors.white, fontSize: 14)),
           const SizedBox(height: 8),
           Row(
             children: [
-              Text(
-                value,
-                style: TextStyle(
-                  color: isLight ? Colors.black : Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text(value, style: TextStyle(color: color == Colors.white ? Colors.black : Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
               const Spacer(),
-              Text(
-                growth,
-                style: const TextStyle(
-                  color: Colors.green,
-                  fontSize: 12,
-                ),
-              ),
+              Icon(icon, color: color == Colors.white ? Colors.black : Colors.white),
             ],
           ),
         ],
@@ -185,253 +207,33 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionButton(String title, IconData icon, Color color, bool hasBadge, BuildContext context) {
+  Widget _buildQuickActionButton(String title, IconData icon, BuildContext context, Widget screen) {
     return ElevatedButton(
-      onPressed: () {
-        // Navigate to the respective screen based on the title
-        if (title == 'Wishlist') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const WishlistScreen()),
-          );
-        } else if (title == 'Products') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ProductsScreen()),
-          );
-        } else if (title == 'Sales') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SalesScreen()),
-          );
-        }
-      },
+      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => screen)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: color, // background color
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        padding: const EdgeInsets.all(16),
-        elevation: 5, // shadow effect
-      ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          padding: const EdgeInsets.all(16)),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Stack(
-            children: [
-              Icon(
-                icon,
-                color: color == Colors.white ? Colors.black : Colors.white,
-                size: 24,
-              ),
-              if (hasBadge)
-                Positioned(
-                  right: -8,
-                  top: -8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.amber,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Text(
-                      '5',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          Icon(icon, size: 24),
           const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              color: color == Colors.white ? Colors.black : Colors.white,
-              fontSize: 12,
-            ),
-          ),
+          Text(title, style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title, String action) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        TextButton(
-          onPressed: () {},
-          child: Text(
-            action,
-            style: const TextStyle(
-              color: Colors.deepPurple,
-            ),
-          ),
-        ),
-      ],
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildOrdersList() {
-    final List<Map<String, dynamic>> orders = [
-      {
-        'id': '#ORD-7829',
-        'name': 'Sarah Williams',
-        'amount': 156.00,
-        'status': 'Processing'
-      },
-      {
-        'id': '#ORD-7828',
-        'name': 'Michael Chen',
-        'amount': 243.50,
-        'status': 'Completed'
-      },
-      {
-        'id': '#ORD-7827',
-        'name': 'Emily Thompson',
-        'amount': 89.99,
-        'status': 'Shipped'
-      },
-    ];
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: orders.length,
-      itemBuilder: (context, index) {
-        final order = orders[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      order['id'] as String,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      order['name'] as String,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '\$${(order['amount'] as double).toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(order['status'] as String),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      order['status'] as String,
-                      style: TextStyle(
-                        color: _getStatusTextColor(order['status'] as String),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'processing':
-        return Colors.amber.withOpacity(0.2);
-      case 'completed':
-        return Colors.green.withOpacity(0.2);
-      case 'shipped':
-        return Colors.blue.withOpacity(0.2);
-      default:
-        return Colors.grey.withOpacity(0.2);
-    }
-  }
-
-  Color _getStatusTextColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'processing':
-        return Colors.amber[800]!;
-      case 'completed':
-        return Colors.green;
-      case 'shipped':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Widget _buildReviewCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: List.generate(
-              5,
-                  (index) => const Icon(
-                Icons.star,
-                color: Colors.amber,
-                size: 20,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Great product quality and fast shipping! Will definitely order again.',
-            style: TextStyle(fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '2 days ago',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
+  Widget _buildTextRow(String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Text(value, style: const TextStyle(fontSize: 16)),
     );
   }
 }

@@ -13,7 +13,7 @@ class _NavScreenState extends State<NavScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    const DashboardScreen(),
+    const DashboardScreen(shopId: '',),
     const Center(child: Text('Orders')),
     const Center(child: Text('Income')),
     const Center(child: Text('store')),

@@ -1,4 +1,5 @@
 import 'package:fiton_seller/screens/income/income_screen.dart';
+import 'package:fiton_seller/screens/orders/orders_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fiton_seller/screens/add_products/add_product_screen.dart';
 import 'package:fiton_seller/screens/dashboard/dashboard_screen.dart';
@@ -15,20 +16,20 @@ class _NavScreenState extends State<NavScreen> {
 
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const Center(child: Text('Orders')),
-    const Center(child: Text('Income')),
+    const OrderScreen(),
+    const Center(child: Text('Income')), // Placeholder
     const IncomeScreen(),
-
+    const Center(child: Text('Shop')), // Added a placeholder for Shop
   ];
 
   void _onItemTapped(int index) {
     if (index == 2) {
-      // Open AddProductScreen without affecting the nav state
+      // Open AddProductScreen without changing nav state
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const AddProductScreen()),
       );
-    } else {
+    } else if (index < _screens.length) { // Prevent out-of-range index
       setState(() {
         _selectedIndex = index;
       });

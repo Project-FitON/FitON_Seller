@@ -268,7 +268,6 @@ class _TransactionSection extends StatelessWidget {
     required this.title,
     required this.count,
     required this.transactions,
-    super.key,
   });
 
   @override
@@ -313,7 +312,6 @@ class _Transaction extends StatelessWidget {
     required this.date,
     required this.amount,
     required this.isPending,
-    super.key,
   });
 
   @override

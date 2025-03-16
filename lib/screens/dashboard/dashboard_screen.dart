@@ -1,8 +1,11 @@
+import 'package:fiton_seller/screens/add_products/add_product_screen.dart';
 import 'package:fiton_seller/screens/shop/notification_screen.dart';
+import 'package:fiton_seller/screens/shop/shop_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'wishlist_screen.dart';
 import 'products_screen.dart';
 import 'sales_screen.dart';
+import 'reviews_screen.dart'; // Add this import for the Reviews Screen
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -73,6 +76,8 @@ class DashboardScreen extends StatelessWidget {
                       '+8.4%',
                       const Color(0xFF1B0331),
                       Icons.shopping_bag,
+                      context,
+                      null,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -83,6 +88,8 @@ class DashboardScreen extends StatelessWidget {
                       '+12.8%',
                       Colors.white,
                       Icons.star,
+                      context,
+                      const ReviewScreen(),
                     ),
                   ),
                 ],
@@ -140,53 +147,63 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, String growth, Color color, IconData icon) {
+  Widget _buildStatCard(String title, String value, String growth, Color color, IconData icon, BuildContext context, Widget? destination) {
     final isLight = color == Colors.white;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: isLight ? Colors.black : Colors.white,
-              fontSize: 14,
+    return GestureDetector(
+      onTap: destination != null
+          ? () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => destination),
+        );
+      }
+          : null,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  color: isLight ? Colors.black : Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: isLight ? Colors.black : Colors.white,
+                fontSize: 14,
               ),
-              const Spacer(),
-              Text(
-                growth,
-                style: const TextStyle(
-                  color: Colors.green,
-                  fontSize: 12,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: isLight ? Colors.black : Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const Spacer(),
+                Text(
+                  growth,
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -203,14 +220,15 @@ class DashboardScreen extends StatelessWidget {
         } else if (title == 'Products') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const ProductsScreen()),
+            MaterialPageRoute(builder: (context) => const AddProductScreen()),
           );
         } else if (title == 'Sales') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const SalesScreen()),
+            MaterialPageRoute(builder: (context) => const ShopScreen()),
           );
         }
+
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: color, // background color

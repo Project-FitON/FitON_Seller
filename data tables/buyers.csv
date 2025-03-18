@@ -1,0 +1,9 @@
+buyer_id,nickname,phone_number,email,password_hash,date_of_birth,gender,created_at,updated_at,interests,recommendation_opt_out,address
+032ef1b5-3cbc-45d9-9aed-2f322a304ec3,DavidTech,5551122334,david.tech@example.com,hashed_password,1993-08-21,Male,2025-01-29 10:56:12.699465,2025-01-29 10:56:12.699465,"[""Technology"",""Gaming""]",false,
+15256b38-f936-4a33-8513-8b44be46e114,EmmaStyle,5553344556,emma.style@example.com,hashed_password,1990-12-05,Female,2025-01-29 10:56:12.699465,2025-01-29 10:56:12.699465,"[""Fashion"",""Photography""]",false,
+2c3c9d38-601a-4271-8fe8-e3cc1dc4ac18,JaneDoe,9876543210,jane.doe@example.com,hashed_password,1992-07-20,Female,2025-01-29 10:56:12.699465,2025-01-29 10:56:12.699465,"[""Beauty"",""Travel""]",false,
+2c5caac4-1d1e-41d9-90a8-52fb1641e312,CharlieDay,4445556666,charlie.day@example.com,hashed_password,1995-11-22,Male,2025-01-29 10:56:12.699465,2025-01-29 10:56:12.699465,"[""Music"",""Gaming""]",false,
+9d5333fe-b439-49b3-a6d7-d54de2bea368,AliceWonder,1231231234,alice.wonder@example.com,hashed_password,1985-10-08,Female,2025-01-29 10:56:12.699465,2025-01-29 10:56:12.699465,"[""Books"",""Fitness""]",false,
+d1ea8d09-451f-4ac9-851f-13f1567e09ef,JohnDoe,1234567890,john.doe@example.com,hashed_password,1990-05-15,Male,2025-01-29 10:56:12.699465,2025-01-29 10:56:12.699465,"[""Fashion"",""Sports""]",false,
+d85fc6f3-6d3a-4ee1-aa6e-d3fae8b9ec3f,BobBuilder,3213213214,bob.builder@example.com,hashed_password,1988-03-14,Male,2025-01-29 10:56:12.699465,2025-01-29 10:56:12.699465,"[""DIY"",""Tech""]",false,
+e16dd632-12ee-4190-8912-052d5863d475,LiamGreen,5557766554,liam.green@example.com,hashed_password,1985-04-17,Male,2025-01-29 10:56:12.699465,2025-01-29 10:56:12.699465,"[""Eco-friendly"",""Travel""]",false,

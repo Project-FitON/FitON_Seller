@@ -1,245 +1,309 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:fiton_seller/services/shop_service.dart';
 
-class WishlistScreen extends StatefulWidget {
+class OrderScreen extends StatefulWidget {
   final String shopId;
-  
-  const WishlistScreen({
-    Key? key,
+
+  const OrderScreen({
+    super.key,
     required this.shopId,
-  }) : super(key: key);
+  });
 
   @override
-  State<WishlistScreen> createState() => _WishlistScreenState();
+  State<OrderScreen> createState() => _OrderScreenState();
 }
 
-class _WishlistScreenState extends State<WishlistScreen> {
-  List<Map<String, dynamic>> _products = [];
+class _OrderScreenState extends State<OrderScreen> {
+  late SupabaseService _supabaseService;
   bool _isLoading = true;
-  int _totalWishes = 0;
-  double _potentialRevenue = 0;
+  List<Map<String, dynamic>> _orders = [];
 
   @override
   void initState() {
     super.initState();
-    _loadWishlistData();
+    _supabaseService = SupabaseService(Supabase.instance.client);
+    _loadOrders();
   }
 
-  Future<void> _loadWishlistData() async {
+  Future<void> _loadOrders() async {
     try {
-      final supabase = Supabase.instance.client;
-      
-      // Fetch products that belong to this shop and have wishes
-      final response = await supabase
-          .from('products')
-          .select('*')
-          .eq('shop_id', widget.shopId)
-          .gt('wish', 0); // Only get products with wishes greater than 0
-
-      if (mounted) {
-        setState(() {
-          _products = List<Map<String, dynamic>>.from(response);
-          _totalWishes = _products.fold(0, (sum, product) => 
-            sum + (product['wish'] as int? ?? 0));
-          _potentialRevenue = _products.fold(0.0, (sum, product) => 
-            sum + (double.tryParse(product['price'].toString()) ?? 0) * (product['wish'] as int? ?? 0));
-          _isLoading = false;
-        });
-      }
+      final orders = await _supabaseService.getRecentOrders(widget.shopId, limit: 10);
+      setState(() {
+        _orders = orders;
+        _isLoading = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading wishlist data: $e')),
-        );
-      }
+      print('Error loading orders: $e');
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // Top App Bar - Full width with curved bottom
-          Container(
-            width: double.infinity,
-            height: 140,
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A0038),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-              ),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.chevron_left,
+      backgroundColor: const Color(0xFF1F0A38), // Dark purple background color
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Top section with title and on-time rate
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ORDERS',
+                        style: TextStyle(
                           color: Colors.white,
-                          size: 28,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                      SizedBox(height: 4),
+                      Text(
+                        '7 Actions Needed',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3B2653), // Darker purple for the card
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: const Row(
                       children: [
-                        const Text(
-                          'WISHLIST',
+                        Text(
+                          '95%',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 20,
+                            fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                          child: Text(
-                            '$_totalWishes Total Wishes',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
+                        SizedBox(width: 5),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'On-time',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
+                          ],
+                        ),
+                        SizedBox(width: 5),
+                        Icon(
+                          Icons.watch_later_outlined,
+                          color: Colors.white,
+                          size: 20,
                         ),
                       ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Order category tabs
+            Container(
+              height: 70,
+              color: const Color(0xFF1F0A38), // Dark purple background
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  const SizedBox(width: 15),
+                  _buildCategoryTab(
+                    icon: Icons.grid_view,
+                    label: 'All',
+                    isSelected: true,
+                  ),
+                  _buildCategoryTab(
+                    icon: Icons.receipt_outlined,
+                    label: 'To Confirm',
+                    count: 1,
+                  ),
+                  _buildCategoryTab(
+                    icon: Icons.inventory_2_outlined,
+                    label: 'To Pack',
+                    count: 2,
+                  ),
+                  _buildCategoryTab(
+                    icon: Icons.local_shipping_outlined,
+                    label: 'To Ship',
+                    count: 4,
+                  ),
+                  const SizedBox(width: 15),
+                ],
+              ),
+            ),
+            const SizedBox(height: 15),
+            // Orders list (scrollable)
+            Expanded(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    topRight: Radius.circular(30),
+                  ),
+                ),
+                child: ListView(
+                  padding: const EdgeInsets.only(top: 15),
+                  children: [
+                    _buildOrderItem(
+                      productName: 'Dark Red Blouse',
+                      orderNumber: '283101',
+                      size: 'L',
+                      quantity: 2,
+                      status: 'To Ship',
+                      imageAsset: 'assets/red_blouse.png',
+                      colorCode: Colors.red[900]!,
+                      timeLeft: '2h 15m 10s left',
+                      actionButtonText: 'Mark as Shipped',
+                    ),
+                    _buildOrderItem(
+                      productName: 'Blue Summer Dress',
+                      orderNumber: '283102',
+                      size: 'M',
+                      quantity: 1,
+                      status: 'To Pack',
+                      imageAsset: 'assets/blue_dress.png',
+                      colorCode: Colors.blue[900]!,
+                      timeLeft: '2h 15m 54s left',
+                      actionButtonText: 'Mark as Packed',
+                    ),
+                    _buildOrderItem(
+                      productName: 'Slim Fit Jeans',
+                      orderNumber: '283103',
+                      size: '32',
+                      quantity: 1,
+                      status: 'To Confirm',
+                      imageAsset: 'assets/jeans.png',
+                      colorCode: Colors.indigo[900]!,
+                      timeLeft: '45m 24s left',
+                      showConfirmCancelButtons: true,
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-
-          // Wishlist Content
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      // Summary Cards
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildSummaryCard(
-                              icon: Icons.favorite,
-                              value: _totalWishes.toString(),
-                              label: 'Total Wishes',
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildSummaryCard(
-                              icon: Icons.account_balance_wallet,
-                              value: 'Rs ${_potentialRevenue.toStringAsFixed(2)}',
-                              label: 'Potential Revenue',
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Wishlist Items
-                      ..._products.map((product) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildWishlistItem(
-                          image: product['image_url'] ?? '',
-                          name: product['name'] ?? 'Unnamed Product',
-                          wishes: product['wish'] ?? 0,
-                          price: double.tryParse(product['price'].toString()) ?? 0.0,
-                          sizes: List<String>.from(product['sizes'] ?? []),
-                          colors: (product['colors'] as List?)?.map<Color>((c) => 
-                            Color(int.parse(c.toString().replaceAll('#', '0xFF'))))
-                            .toList() ?? [],
-                        ),
-                      )).toList(),
-                    ],
-                  ),
-          ),
-        ],
+          ],
+        ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
-  Widget _buildSummaryCard({
+  Widget _buildCategoryTab({
     required IconData icon,
-    required String value,
     required String label,
+    int? count,
+    bool isSelected = false,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 5),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: isSelected
+            ? Colors.white
+            : const Color(0xFF3B2653),
+        borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: const Color(0xFF1A0038),
-            size: 32,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? const Color(0xFF1F0A38) : Colors.white,
+                size: 18,
+              ),
+              if (count != null) ...[
+                const SizedBox(width: 5),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.orange,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    count.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Color(0xFF1A0038),
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-            ),
-          ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 5),
           Text(
             label,
             style: TextStyle(
-              color: Colors.grey[600],
+              color: isSelected ? const Color(0xFF1F0A38) : Colors.white,
               fontSize: 12,
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildWishlistItem({
-    required String image,
-    required String name,
-    required int wishes,
-    required double price,
-    required List<String> sizes,
-    required List<Color> colors,
+  Widget _buildOrderItem({
+    required String productName,
+    required String orderNumber,
+    required String size,
+    required int quantity,
+    required String status,
+    required String imageAsset,
+    required Color colorCode,
+    required String timeLeft,
+    String? actionButtonText,
+    bool showConfirmCancelButtons = false,
   }) {
+    // Determine status color and background
+    Color statusBgColor;
+    Color statusTextColor = Colors.black;
+
+    switch (status) {
+      case 'To Ship':
+        statusBgColor = Colors.orange.shade100;
+        break;
+      case 'To Pack':
+        statusBgColor = Colors.blue.shade100;
+        break;
+      case 'To Confirm':
+        statusBgColor = Colors.green.shade100;
+        break;
+      default:
+        statusBgColor = Colors.grey.shade200;
+    }
+
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 5,
             offset: const Offset(0, 2),
@@ -247,126 +311,181 @@ class _WishlistScreenState extends State<WishlistScreen> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
           children: [
-            // Product Image
-            Container(
-              width: 70,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Image.network(
-                  image,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product image
+                Container(
+                  width: 60,
                   height: 80,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      name.contains('Dress') ? Icons.female : Icons.accessibility,
-                      size: 40,
-                      color: Colors.grey[400],
-                    );
-                  },
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Image.asset(
+                    imageAsset,
+                    fit: BoxFit.contain,
+                  ),
                 ),
-              ),
+                const SizedBox(width: 15),
+                // Product details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            productName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusBgColor,
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Text(
+                              status,
+                              style: TextStyle(
+                                color: statusTextColor,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Order #$orderNumber',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Text(
+                            'Size: $size | Qty: $quantity',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Container(
+                            width: 15,
+                            height: 15,
+                            decoration: BoxDecoration(
+                              color: colorCode,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(width: 16),
-
-            // Product Details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Product Name
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF1A0038),
+            const SizedBox(height: 15),
+            // Bottom row with timer and action button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.sync,
+                      color: Colors.red,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      timeLeft,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+                if (!showConfirmCancelButtons && actionButtonText != null)
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1F0A38),
+                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: Text(
+                      actionButtonText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
-
-                  const SizedBox(height: 8),
-
-                  // Wishes Count
+                if (showConfirmCancelButtons)
                   Row(
                     children: [
-                      Icon(
-                        Icons.people,
-                        size: 14,
-                        color: Colors.grey[500],
+                      // Cancel button
+                      OutlinedButton(
+                        onPressed: () {},
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          side: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$wishes wishes',
-                        style: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 12,
+                      const SizedBox(width: 10),
+                      // Confirm button
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1F0A38),
+                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: const Text(
+                          'Confirm Order',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 16),
-
-                  // Size Options
-                  Row(
-                    children: [
-                      ...sizes.map((size) => _buildSizeOption(size)),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Color Options
-                  Row(
-                    children: [
-                      ...colors.map((color) => _buildColorOption(color)),
-                    ],
-                  ),
-                ],
-              ),
+              ],
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSizeOption(String size) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Center(
-        child: Text(
-          size,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[800],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildColorOption(Color color) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
       ),
     );
   }

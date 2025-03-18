@@ -1,3 +1,7 @@
+import 'package:fiton_seller/screens/dashboard/dashboard_screen.dart';
+import 'package:fiton_seller/screens/dashboard/reviews_screen.dart';
+import 'package:fiton_seller/screens/dashboard/wishlist_screen.dart';
+import 'package:fiton_seller/screens/nav/nav_screen.dart'; // Import NavScreen
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fiton_seller/screens/orders/orders_screen.dart';  // Import OrderScreen
@@ -25,7 +29,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.deepPurple,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const OrderScreen(), // ✅ Load OrderScreen
+      home:  NavScreen(),  // ✅ Set NavScreen as the home screen
     );
   }
 }

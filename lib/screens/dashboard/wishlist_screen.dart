@@ -5,23 +5,42 @@ class WishlistScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get status bar height and screen width
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
+      body: Stack(
         children: [
-          // Top App Bar - Full width with curved bottom
-          Container(
-            width: double.infinity,
-            height: 140, // Increased height to account for status bar
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A0038), // Dark purple
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(40),
+          // Positioned top container - partial width with curved bottom
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              width: screenWidth * 0.65, // Approximately half of the screen width
+              height: 120 + statusBarHeight,
+              decoration: const BoxDecoration(
+                color: Color(0xFF1A0038), // Dark purple
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                ),
               ),
             ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+
+          // Main content
+          Column(
+            children: [
+              // Top header area with back button and title
+              Container(
+                height: 120 + statusBarHeight,
+                padding: EdgeInsets.only(
+                  top: statusBarHeight + 20,
+                  left: 20,
+                  right: 20,
+                  bottom: 20,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -34,93 +53,93 @@ class WishlistScreen extends StatelessWidget {
                         alignment: Alignment.center,
                         child: const Icon(
                           Icons.chevron_left,
-                          color: Colors.white,
-                          size: 28,
+                          color: Colors.black,
+                          size: 35,
                         ),
                       ),
                     ),
                     const SizedBox(width: 16),
-                    // Title and notification
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'WISHLIST',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                    // Title and notification - positioned to match the purple background
+                    Padding(
+                      padding: EdgeInsets.only(left: screenWidth * 0.35),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'WISHLIST',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                          child: const Text(
+                          const SizedBox(height: 2),
+                          const Text(
                             '5 New Wishes',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: 15,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ),
 
-          // Wishlist Content
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Summary Cards
-                Row(
+              // Wishlist Content
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
                   children: [
-                    // Total Wishes Card
-                    Expanded(
-                      child: _buildSummaryCard(
-                        icon: Icons.favorite,
-                        value: '123',
-                        label: 'Total Wishes',
-                      ),
+                    // Summary Cards
+                    Row(
+                      children: [
+                        // Total Wishes Card
+                        Expanded(
+                          child: _buildSummaryCard(
+                            icon: Icons.favorite,
+                            value: '123',
+                            label: 'Total Wishes',
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        // Potential Revenue Card
+                        Expanded(
+                          child: _buildSummaryCard(
+                            icon: Icons.account_balance_wallet,
+                            value: 'Rs 3.2K',
+                            label: 'Potential Revenue',
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    // Potential Revenue Card
-                    Expanded(
-                      child: _buildSummaryCard(
-                        icon: Icons.account_balance_wallet,
-                        value: 'Rs 3.2K',
-                        label: 'Potential Revenue',
-                      ),
+
+                    const SizedBox(height: 20),
+
+                    // Wishlist Items
+                    _buildWishlistItem(
+                      image: 'assets/summer_dress.png',
+                      name: 'Summer Floral Dress',
+                      wishes: 32,
+                      sizes: ['S', 'M', 'L'],
+                      colors: [Colors.pink, Colors.blue, Colors.amber],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildWishlistItem(
+                      image: 'assets/denim_jacket.png',
+                      name: 'Denim Jacket',
+                      wishes: 28,
+                      sizes: ['M', 'L', 'XL'],
+                      colors: [Colors.blue, Colors.black],
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 20),
-
-                // Wishlist Items
-                _buildWishlistItem(
-                  image: 'assets/summer_dress.png',
-                  name: 'Summer Floral Dress',
-                  wishes: 32,
-                  sizes: ['S', 'M', 'L'],
-                  colors: [Colors.pink, Colors.blue, Colors.amber],
-                ),
-
-                const SizedBox(height: 16),
-
-                _buildWishlistItem(
-                  image: 'assets/denim_jacket.png',
-                  name: 'Denim Jacket',
-                  wishes: 28,
-                  sizes: ['M', 'L', 'XL'],
-                  colors: [Colors.blue, Colors.black],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

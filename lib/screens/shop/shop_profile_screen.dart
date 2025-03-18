@@ -118,6 +118,18 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
       padding: const EdgeInsets.all(16.0),
       child: Row(
         children: [
+          // Back button
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).pop();
+            },
+              child: const Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          const SizedBox(width: 12),
           CircleAvatar(
             radius: 24,
             backgroundColor: Colors.white,
@@ -139,7 +151,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                 Text(
                   '7,388,478',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Colors.white.withOpacity(0.7),
                     fontSize: 14,
                   ),
                 ),
@@ -163,7 +175,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.transparent,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
       ),
       child: Icon(
         icon,
@@ -202,7 +214,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: isSelected
                           ? [BoxShadow(
-                        color: _primaryPurple.withValues(alpha: 0.3),
+                        color: _primaryPurple.withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       )]
@@ -210,7 +222,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                     ),
                     child: Icon(
                       _categories[index]['icon'],
-                      color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
                       size: 20,
                     ),
                   ),
@@ -218,7 +230,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                   Text(
                     _categories[index]['label'],
                     style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
                       fontSize: 12,
                       fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
                     ),
@@ -294,7 +306,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                             color: Colors.white,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
+                                color: Colors.black.withOpacity(0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),

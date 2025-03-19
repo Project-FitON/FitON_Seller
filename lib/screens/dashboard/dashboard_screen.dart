@@ -1,167 +1,361 @@
-import 'package:fiton_seller/screens/add_products/add_product_screen.dart';
 import 'package:fiton_seller/screens/shop/notification_screen.dart';
-import 'package:fiton_seller/screens/shop/shop_profile_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase/supabase.dart';
+import 'package:supabase/supabase.dart' as _currentShop;
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:fiton_seller/models/shop_model.dart';
+import 'package:fiton_seller/services/shop_service.dart';
 import 'wishlist_screen.dart';
 import 'products_screen.dart';
 import 'sales_screen.dart';
-import 'reviews_screen.dart'; // Add this import for the Reviews Screen
+import 'reviews_screen.dart';
+import 'package:intl/intl.dart';
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+class DashboardScreen extends StatefulWidget {
+  final String shopId;
+  
+  const DashboardScreen({
+    super.key,
+    required this.shopId,
+  });
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  late SupabaseService _supabaseService;
+  Shop? _currentShop;
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _recentOrders = [];
+  List<Map<String, dynamic>> _latestReviews = [];
+  Map<String, dynamic> _shopStats = {
+    'orderCount': '0',
+    'reviewCount': '0',
+    'orderGrowth': '0.0%',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _supabaseService = SupabaseService(Supabase.instance.client);
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      print('Loading dashboard data for shop ID: ${widget.shopId}');
+      
+      // Get the current shop
+      _currentShop = await _supabaseService.getCurrentShop(widget.shopId);
+      print('Current shop: ${_currentShop != null ? "${_currentShop!.name} (${_currentShop!.id})" : "null"}');
+      
+      if (_currentShop != null) {
+        print('Using shop ID for queries: ${_currentShop!.id}');
+        
+        // Fetch all dashboard data in parallel
+        final results = await Future.wait([
+          _supabaseService.getRecentOrders(_currentShop!.id),
+          _supabaseService.getLatestReviews(_currentShop!.id),
+          _supabaseService.getShopStats(_currentShop!.id),
+        ]);
+
+        setState(() {
+          _recentOrders = List<Map<String, dynamic>>.from(results[0] as List);
+          _latestReviews = List<Map<String, dynamic>>.from(results[1] as List);
+          _shopStats = results[2] as Map<String, dynamic>;
+          _isLoading = false;
+        });
+        
+        print('Loaded reviews count: ${_latestReviews.length}');
+      }
+    } catch (e) {
+      print('Error loading dashboard data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F4),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Profile Header
-              Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 25,
-                    backgroundColor: Colors.grey,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'My Fashion',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _currentShop == null
+                ? const Center(child: Text('No shop data found'))
+                : RefreshIndicator(
+                    onRefresh: _loadDashboardData,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Profile Header with Shop Data
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 25,
+                                backgroundColor: Colors.grey,
+                                backgroundImage:
+                                    _currentShop!.profilePhoto != null
+                                        ? NetworkImage(_currentShop!.profilePhoto!)
+                                        : null,
+                                child:
+                                    _currentShop!.profilePhoto == null
+                                        ? const Icon(
+                                          Icons.store,
+                                          color: Colors.white,
+                                        )
+                                        : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _currentShop!.name,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${_currentShop!.nickname} · ${_currentShop!.phoneNumber}',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.settings),
+                                onPressed: () {},
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.notifications),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) => const NotificationScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
-                        ),
-                        Text(
-                          '174 Followers',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
+                          const SizedBox(height: 24),
+
+                          // Stats Row
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildStatCard(
+                                  'Orders',
+                                  _shopStats['orderCount'].toString(),
+                                  _shopStats['orderGrowth'],
+                                  const Color(0xFF1B0331),
+                                  Icons.shopping_bag,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildStatCard(
+                                  'Reviews',
+                                  _shopStats['reviewCount'].toString(),
+                                  '+12.8%', // You might want to calculate this
+                                  Colors.white,
+                                  Icons.star,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.settings),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.notifications),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const NotificationScreen()),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                          const SizedBox(height: 16),
 
-              // Stats Row
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Orders',
-                      '284',
-                      '+8.4%',
-                      const Color(0xFF1B0331),
-                      Icons.shopping_bag,
-                      context,
-                      null,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Reviews',
-                      '567',
-                      '+12.8%',
-                      Colors.white,
-                      Icons.star,
-                      context,
-                      const ReviewScreen(),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                          // Quick Actions Row
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildQuickActionButton(
+                                  'Wishlist',
+                                  Icons.favorite,
+                                  const Color(0xFF1B0331),
+                                  true,
+                                  context,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildQuickActionButton(
+                                  'Products',
+                                  Icons.shopping_cart,
+                                  Colors.white,
+                                  false,
+                                  context,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildQuickActionButton(
+                                  'Sales',
+                                  Icons.attach_money,
+                                  Colors.white,
+                                  false,
+                                  context,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
 
-              // Quick Actions Row
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildQuickActionButton(
-                      'Wishlist',
-                      Icons.favorite,
-                      const Color(0xFF1B0331),
-                      true,
-                      context,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildQuickActionButton(
-                      'Products',
-                      Icons.shopping_cart,
-                      Colors.white,
-                      false,
-                      context,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildQuickActionButton(
-                      'Sales',
-                      Icons.attach_money,
-                      Colors.white,
-                      false,
-                      context,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                          // Recent Orders Section
+                          _buildSectionHeader('Recent Orders', 'View All'),
+                          _buildOrdersList(),
+                          const SizedBox(height: 24),
 
-              // Recent Orders Section
-              _buildSectionHeader('Recent Orders', 'View All'),
-              _buildOrdersList(),
-              const SizedBox(height: 24),
-
-              // Latest Reviews Section
-              _buildSectionHeader('Latest Reviews', 'View All'),
-              _buildReviewCard(),
-            ],
-          ),
-        ),
+                          // Latest Reviews Section
+                          _buildSectionHeader('Latest Reviews', 'View All'),
+                          _buildReviewCard(),
+                        ],
+                      ),
+                    ),
+                  ),
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, String growth, Color color, IconData icon, BuildContext context, Widget? destination) {
-    final isLight = color == Colors.white;
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Text(
+            '$label: ',
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+          ),
+          Text(value, style: TextStyle(color: Colors.grey[700], fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(
+    String title,
+    String value,
+    String growth,
+    Color bgColor,
+    IconData icon,
+  ) {
+    final isLight = bgColor == Colors.white;
+    final textColor = isLight ? Colors.black : Colors.white;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: textColor),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            growth,
+            style: TextStyle(
+              color: growth.startsWith('+') ? Colors.green : Colors.red,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton(
+    String title,
+    IconData icon,
+    Color bgColor,
+    bool isHighlighted,
+    BuildContext context,
+  ) {
+    final isLight = bgColor == Colors.white;
+    final textColor = isLight ? Colors.black : Colors.white;
+
     return GestureDetector(
-      onTap: destination != null
-          ? () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => destination),
-        );
-      }
-          : null,
+      onTap: () {
+        switch (title) {
+          case 'Wishlist':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => WishlistScreen(shopId: widget.shopId),
+              ),
+            );
+            break;
+          case 'Products':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProductsScreen(),
+              ),
+            );
+            break;
+          case 'Sales':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SalesScreen(shopId: widget.shopId),
+              ),
+            );
+            break;
+        }
+      },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: color,
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -172,35 +366,39 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Stack(
+              children: [
+                Icon(
+                  icon,
+                  color: bgColor == Colors.white ? Colors.black : Colors.white,
+                  size: 24,
+                ),
+                if (isHighlighted)
+                  Positioned(
+                    right: -8,
+                    top: -8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.amber,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Text(
+                        '5',
+                        style: TextStyle(color: Colors.white, fontSize: 10),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Text(
               title,
               style: TextStyle(
-                color: isLight ? Colors.black : Colors.white,
-                fontSize: 14,
+                color: textColor,
+                fontWeight: FontWeight.w500,
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: isLight ? Colors.black : Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  growth,
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -208,73 +406,37 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionButton(String title, IconData icon, Color color, bool hasBadge, BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        // Navigate to the respective screen based on the title
-        if (title == 'Wishlist') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const WishlistScreen()),
-          );
-        } else if (title == 'Products') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddProductScreen()),
-          );
-        } else if (title == 'Sales') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ShopScreen()),
-          );
-        }
-
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color, // background color
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        padding: const EdgeInsets.all(16),
-        elevation: 5, // shadow effect
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+  Widget _buildSectionHeader(String title, String action) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Stack(
-            children: [
-              Icon(
-                icon,
-                color: color == Colors.white ? Colors.black : Colors.white,
-                size: 24,
-              ),
-              if (hasBadge)
-                Positioned(
-                  right: -8,
-                  top: -8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.amber,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Text(
-                      '5',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
           Text(
             title,
-            style: TextStyle(
-              color: color == Colors.white ? Colors.black : Colors.white,
-              fontSize: 12,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              if (title == 'Latest Reviews') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ReviewsScreen(shopId: widget.shopId),
+                  ),
+                );
+              }
+              // Handle other sections if needed
+            },
+            child: Text(
+              action,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
             ),
           ),
         ],
@@ -282,180 +444,320 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, String action) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+  Widget _buildOrdersList() {
+    if (_recentOrders.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        TextButton(
-          onPressed: () {},
+        child: const Center(
           child: Text(
-            action,
-            style: const TextStyle(
-              color: Color(0xFF1B0331),
+            'No recent orders',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 16,
             ),
           ),
         ),
-      ],
-    );
-  }
+      );
+    }
 
-  Widget _buildOrdersList() {
-    final List<Map<String, dynamic>> orders = [
-      {
-        'id': '#ORD-7829',
-        'name': 'Sarah Williams',
-        'amount': 156.00,
-        'status': 'Processing'
-      },
-      {
-        'id': '#ORD-7828',
-        'name': 'Michael Chen',
-        'amount': 243.50,
-        'status': 'Completed'
-      },
-      {
-        'id': '#ORD-7827',
-        'name': 'Emily Thompson',
-        'amount': 89.99,
-        'status': 'Shipped'
-      },
-    ];
+    return Column(
+      children: _recentOrders.take(3).map((order) {
+        print('Processing order: $order'); // Debug print
+        
+        // Try to extract order data with fallbacks
+        String customerName = 'Unknown Customer';
+        String orderId = 'N/A';
+        double totalAmount = 0.0;
+        DateTime orderDate = DateTime.now();
+        String status = 'pending';
+        
+        try {
+          // Try to get customer name
+          if (order.containsKey('buyers') && order['buyers'] is Map) {
+            customerName = order['buyers']['name']?.toString() ?? 'Unknown Customer';
+          } else if (order.containsKey('customer_name')) {
+            customerName = order['customer_name']?.toString() ?? 'Unknown Customer';
+          }
+          
+          // Try to get order ID
+          if (order.containsKey('order_id')) {
+            orderId = order['order_id']?.toString() ?? 'N/A';
+          } else if (order.containsKey('id')) {
+            orderId = order['id']?.toString() ?? 'N/A';
+          } else if (order.containsKey('order_number')) {
+            orderId = order['order_number']?.toString() ?? 'N/A';
+          }
+          
+          // Try to get total amount
+          if (order.containsKey('total_amount')) {
+            totalAmount = order['total_amount'] is double 
+                ? order['total_amount'] 
+                : double.tryParse(order['total_amount']?.toString() ?? '0') ?? 0.0;
+          } else if (order.containsKey('total')) {
+            totalAmount = order['total'] is double 
+                ? order['total'] 
+                : double.tryParse(order['total']?.toString() ?? '0') ?? 0.0;
+          } else if (order.containsKey('amount')) {
+            totalAmount = order['amount'] is double 
+                ? order['amount'] 
+                : double.tryParse(order['amount']?.toString() ?? '0') ?? 0.0;
+          }
+          
+          // Try to get order date
+          if (order.containsKey('created_at')) {
+            orderDate = DateTime.tryParse(order['created_at']?.toString() ?? '') ?? DateTime.now();
+          } else if (order.containsKey('date')) {
+            orderDate = DateTime.tryParse(order['date']?.toString() ?? '') ?? DateTime.now();
+          }
+          
+          // Try to get status
+          if (order.containsKey('status')) {
+            status = order['status']?.toString()?.toLowerCase() ?? 'pending';
+          }
+        } catch (e) {
+          print('Error processing order data: $e');
+        }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: orders.length,
-      itemBuilder: (context, index) {
-        final order = orders[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _getStatusColor(status).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.shopping_bag,
+                  color: _getStatusColor(status),
+                ),
+              ),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      order['id'] as String,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            customerName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormat('MMM d').format(orderDate),
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      order['name'] as String,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Order #$orderId',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '\$${totalAmount.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Color(0xFF1B0331),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '\$${(order['amount'] as double).toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(order['status'] as String),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      order['status'] as String,
-                      style: TextStyle(
-                        color: _getStatusTextColor(order['status'] as String),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
         );
-      },
+      }).toList(),
     );
   }
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'processing':
-        return Colors.amber.withOpacity(0.2);
-      case 'completed':
-        return Colors.green.withOpacity(0.2);
-      case 'shipped':
-        return Colors.blue.withOpacity(0.2);
-      default:
-        return Colors.grey.withOpacity(0.2);
-    }
-  }
-
-  Color _getStatusTextColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'processing':
-        return Colors.amber[800]!;
       case 'completed':
         return Colors.green;
-      case 'shipped':
+      case 'processing':
         return Colors.blue;
+      case 'cancelled':
+        return Colors.red;
+      case 'pending':
       default:
-        return Colors.grey;
+        return Colors.orange;
     }
   }
 
   Widget _buildReviewCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: List.generate(
-              5,
-                  (index) => const Icon(
-                Icons.star,
-                color: Colors.amber,
-                size: 20,
-              ),
+    if (_latestReviews.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Great product quality and fast shipping! Will definitely order again.',
-            style: TextStyle(fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '2 days ago',
+          ],
+        ),
+        child: const Center(
+          child: Text(
+            'No reviews yet',
             style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
+              color: Colors.grey,
+              fontSize: 16,
             ),
           ),
-        ],
-      ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _latestReviews.take(3).map((review) {
+        print('Processing review: $review'); // Debug print
+        
+        // Try to extract rating, comment, and created_at with fallbacks
+        int rating = 0;
+        String comment = 'No comment';
+        DateTime createdAt = DateTime.now();
+        
+        try {
+          // Try to get rating
+          if (review.containsKey('rating')) {
+            rating = review['rating'] is int ? review['rating'] : int.tryParse(review['rating'].toString()) ?? 0;
+          }
+          
+          // Try to get comment
+          if (review.containsKey('comment')) {
+            comment = review['comment']?.toString() ?? 'No comment';
+          }
+          
+          // Try to get created_at
+          if (review.containsKey('created_at')) {
+            createdAt = DateTime.tryParse(review['created_at']?.toString() ?? '') ?? DateTime.now();
+          }
+        } catch (e) {
+          print('Error processing review data: $e');
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ...List.generate(5, (index) {
+                          return Icon(
+                            Icons.star,
+                            size: 14,
+                            color: index < rating ? Colors.amber : Colors.grey[300],
+                          );
+                        }),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$rating/5',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    DateFormat('MMM d').format(createdAt),
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                comment,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

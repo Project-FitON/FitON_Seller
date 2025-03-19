@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:fiton_seller/screens/nav/side_menu.dart';
 
 class AddProductScreen extends StatelessWidget {
-  const AddProductScreen({super.key});
+  final String shopId;
+
+  const AddProductScreen({
+    super.key,
+    required this.shopId,
+  });
 
   @override
   Widget build(BuildContext context) {

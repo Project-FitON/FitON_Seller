@@ -1,0 +1,4 @@
+tryon_id,buyer_id,dependent_id,product_id,input_image_id,generated_images,created_at
+4b211992-7443-4af7-9b80-ea41a5a1daae,d1ea8d09-451f-4ac9-851f-13f1567e09ef,b9838fe6-2947-4b62-ab9d-6812a8b7cf30,7d955746-0ddb-4181-8c30-69ea1a0187ed,ee9aa4e6-574e-4d78-ba16-69d5cf50cd3e,"[""https://example.com/tryon1.jpg""]",2025-01-29 10:56:12.699465
+666cac22-7ad1-435b-87af-dd9cd58e9b68,9d5333fe-b439-49b3-a6d7-d54de2bea368,f12f47b3-f3c9-4b3b-8459-cab63937b761,7d955746-0ddb-4181-8c30-69ea1a0187ed,9acefb36-ce8c-42eb-83ba-3c39828bde8e,"[""https://example.com/tryon2.jpg""]",2025-01-29 10:56:12.699465
+ee42beec-74df-4ba5-bcc7-fd95cf345b7b,15256b38-f936-4a33-8513-8b44be46e114,3ef09c87-e309-469b-ae34-4f53dc1d999c,cdc99102-9e17-4835-9181-f96c1eee939c,3b64a4bb-7798-438b-ab52-050cd48b26f5,"[""https://example.com/tryon3.jpg""]",2025-01-29 10:56:12.699465

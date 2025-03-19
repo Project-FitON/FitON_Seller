@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:fiton_seller/services/shop_service.dart';
+
+import '../../models/shop_model.dart';
 
 class ShopScreen extends StatefulWidget {
-  const ShopScreen({super.key});
+  final String shopId;
+  
+  const ShopScreen({
+    super.key,
+    required this.shopId,
+  });
 
   @override
   State<ShopScreen> createState() => _ShopScreenState();
@@ -12,6 +21,10 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
   int _selectedCategoryIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late SupabaseService _supabaseService;
+  List<Map<String, dynamic>> _products = [];
+  bool _isLoading = true;
+  Shop? _shopData;
 
   // App theme colors
   final Color _headerBackgroundColor = const Color(0xFF1B0331); // Dark purple for header
@@ -27,28 +40,10 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
     {'icon': FontAwesomeIcons.ellipsis, 'label': 'More'},
   ];
 
-  final List<Map<String, dynamic>> _clothingItems = [
-    {
-      'image': 'assets/images/casual_1.jpg',
-      'isFeatured': false,
-    },
-    {
-      'image': 'assets/images/casual_2.jpg',
-      'isFeatured': true,
-    },
-    {
-      'image': 'assets/images/casual_3.jpg',
-      'isFeatured': false,
-    },
-    {
-      'image': 'assets/images/casual_4.jpg',
-      'isFeatured': false,
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
+    _supabaseService = SupabaseService(Supabase.instance.client);
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -59,13 +54,48 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
         curve: Curves.easeInOut,
       ),
     );
-    _animationController.forward();
+    _loadShopData();
+    _loadProducts();
   }
 
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
+  Future<void> _loadShopData() async {
+    try {
+      final shopData = await _supabaseService.getCurrentShop(widget.shopId);
+      if (shopData != null) {
+        setState(() {
+          _shopData = shopData;
+        });
+      }
+    } catch (e) {
+      print('Error loading shop data: $e');
+    }
+  }
+
+  Future<void> _loadProducts() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final category = _selectedCategoryIndex == 0 ? null : _categories[_selectedCategoryIndex]['label'];
+      final products = await _supabaseService.getShopProducts(
+        category: category,
+        sortBy: 'created_at',
+        ascending: false,
+      );
+
+      setState(() {
+        _products = products;
+        _isLoading = false;
+      });
+      _animationController.reset();
+      _animationController.forward();
+    } catch (e) {
+      print('Error loading products: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _changeCategory(int index) {
@@ -73,9 +103,14 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
       setState(() {
         _selectedCategoryIndex = index;
       });
-      _animationController.reset();
-      _animationController.forward();
+      _loadProducts();
     }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -102,10 +137,12 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
           Expanded(
             child: Container(
               color: _contentBackgroundColor,
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: _buildClothingGrid(),
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: _buildProductGrid(),
+                    ),
             ),
           ),
         ],
@@ -118,38 +155,31 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
       padding: const EdgeInsets.all(16.0),
       child: Row(
         children: [
-          // Back button
-          GestureDetector(
-            onTap: () {
-              Navigator.of(context).pop();
-            },
-              child: const Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-          const SizedBox(width: 12),
           CircleAvatar(
             radius: 24,
             backgroundColor: Colors.white,
-            child: Image.asset('assets/images/logo.png', height: 32),
+            backgroundImage: _shopData?.profilePhoto != null
+                ? NetworkImage(_shopData!.profilePhoto!)
+                : null,
+            child: _shopData?.profilePhoto == null
+                ? Image.asset('assets/images/logo.png', height: 32)
+                : null,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'My Fashion',
-                  style: TextStyle(
+                Text(
+                  _shopData?.name ?? 'Loading...',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
                 ),
                 Text(
-                  '7,388,478',
+                  '${_products.length} Products',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.7),
                     fontSize: 14,
@@ -175,7 +205,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.transparent,
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Icon(
         icon,
@@ -214,7 +244,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: isSelected
                           ? [BoxShadow(
-                        color: _primaryPurple.withOpacity(0.3),
+                        color: _primaryPurple.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       )]
@@ -222,7 +252,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                     ),
                     child: Icon(
                       _categories[index]['icon'],
-                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
+                      color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
                       size: 20,
                     ),
                   ),
@@ -230,7 +260,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                   Text(
                     _categories[index]['label'],
                     style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
+                      color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
                       fontSize: 12,
                       fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
                     ),
@@ -247,110 +277,113 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildClothingGrid() {
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
+  Widget _buildProductGrid() {
+    if (_products.isEmpty) {
+      return const Center(
+        child: Text('No products found'),
+      );
+    }
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.75,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+      ),
+      itemCount: _products.length,
+      itemBuilder: (context, index) {
+        final product = _products[index];
+        final isFeatured = product['is_featured'] ?? false;
+        
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+              // Product Image
+              Expanded(
+                child: Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(12),
+                        ),
+                        image: DecorationImage(
+                          image: NetworkImage(product['image_url'] ?? ''),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    if (isFeatured)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Featured',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                decoration: BoxDecoration(
-                  color: _accentPurple,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Text(
-                  '124 Casual Clothes',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
+              ),
+              // Product Info
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product['name'] ?? 'Unnamed Product',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '\$${(product['price'] ?? 0.0).toStringAsFixed(2)}',
+                      style: TextStyle(
+                        color: _primaryPurple,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.7,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: _clothingItems.length,
-              itemBuilder: (context, index) {
-                final item = _clothingItems[index];
-                return Hero(
-                  tag: 'clothing_${index}',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        // Handle item tap with animation
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.asset(
-                                item['image'],
-                                fit: BoxFit.cover,
-                              ),
-                              if (item['isFeatured'])
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: SizedBox(
-                                    width: 100,
-                                    height: 140,
-                                    child: OverflowBox(
-                                      maxWidth: 160,
-                                      maxHeight: 200,
-                                      child: Transform.translate(
-                                        offset: const Offset(30, -30),
-                                        child: Image.asset(
-                                          'assets/images/casual_featured.jpg',
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

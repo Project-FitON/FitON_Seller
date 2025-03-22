@@ -2,6 +2,7 @@ import 'package:fiton_seller/screens/add_products/add_product_screen.dart';
 import 'package:fiton_seller/screens/shop/notification_screen.dart';
 import 'package:fiton_seller/screens/shop/shop_profile_screen.dart';
 import 'package:flutter/material.dart';
+import '../settings/settings_screen.dart';
 import 'wishlist_screen.dart';
 import 'products_screen.dart';
 import 'sales_screen.dart';
@@ -51,7 +52,12 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.settings),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                      );
+                    },
                   ),
                   IconButton(
                     icon: const Icon(Icons.notifications),

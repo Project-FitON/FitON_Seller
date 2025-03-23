@@ -1,50 +1,85 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class WishlistScreen extends StatelessWidget {
-  const WishlistScreen({Key? key}) : super(key: key);
+class WishlistScreen extends StatefulWidget {
+  final String shopId;
+  
+  const WishlistScreen({
+    Key? key,
+    required this.shopId,
+  }) : super(key: key);
+
+  @override
+  State<WishlistScreen> createState() => _WishlistScreenState();
+}
+
+class _WishlistScreenState extends State<WishlistScreen> {
+  List<Map<String, dynamic>> _products = [];
+  bool _isLoading = true;
+  int _totalWishes = 0;
+  double _potentialRevenue = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWishlistData();
+  }
+
+  Future<void> _loadWishlistData() async {
+    try {
+      final supabase = Supabase.instance.client;
+      
+      // Fetch products that belong to this shop and have wishes
+      final response = await supabase
+          .from('products')
+          .select('*')
+          .eq('shop_id', widget.shopId)
+          .gt('wish', 0); // Only get products with wishes greater than 0
+
+      if (mounted) {
+        setState(() {
+          _products = List<Map<String, dynamic>>.from(response);
+          _totalWishes = _products.fold(0, (sum, product) => 
+            sum + (product['wish'] as int? ?? 0));
+          _potentialRevenue = _products.fold(0.0, (sum, product) => 
+            sum + (double.tryParse(product['price'].toString()) ?? 0) * (product['wish'] as int? ?? 0));
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading wishlist data: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Get status bar height and screen width
-    final statusBarHeight = MediaQuery.of(context).padding.top;
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
+      body: Column(
         children: [
-          // Positioned top container - partial width with curved bottom
-          Positioned(
-            top: 0,
-            right: 0,
-            child: Container(
-              width: screenWidth * 0.65, // Approximately half of the screen width
-              height: 120 + statusBarHeight,
-              decoration: const BoxDecoration(
-                color: Color(0xFF1A0038), // Dark purple
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                ),
+          // Top App Bar - Full width with curved bottom
+          Container(
+            width: double.infinity,
+            height: 140,
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A0038),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(40),
               ),
             ),
-          ),
-
-          // Main content
-          Column(
-            children: [
-              // Top header area with back button and title
-              Container(
-                height: 120 + statusBarHeight,
-                padding: EdgeInsets.only(
-                  top: statusBarHeight + 20,
-                  left: 20,
-                  right: 20,
-                  bottom: 20,
-                ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Back button with navigation
                     GestureDetector(
                       onTap: () {
                         Navigator.pop(context);
@@ -53,93 +88,87 @@ class WishlistScreen extends StatelessWidget {
                         alignment: Alignment.center,
                         child: const Icon(
                           Icons.chevron_left,
-                          color: Colors.black,
-                          size: 35,
+                          color: Colors.white,
+                          size: 28,
                         ),
                       ),
                     ),
                     const SizedBox(width: 16),
-                    // Title and notification - positioned to match the purple background
-                    Padding(
-                      padding: EdgeInsets.only(left: screenWidth * 0.35),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'WISHLIST',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          const Text(
-                            '5 New Wishes',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Wishlist Content
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    // Summary Cards
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Total Wishes Card
-                        Expanded(
-                          child: _buildSummaryCard(
-                            icon: Icons.favorite,
-                            value: '123',
-                            label: 'Total Wishes',
+                        const Text(
+                          'WISHLIST',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        // Potential Revenue Card
-                        Expanded(
-                          child: _buildSummaryCard(
-                            icon: Icons.account_balance_wallet,
-                            value: 'Rs 3.2K',
-                            label: 'Potential Revenue',
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                          child: Text(
+                            '$_totalWishes Total Wishes',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // Wishlist Items
-                    _buildWishlistItem(
-                      image: 'assets/summer_dress.png',
-                      name: 'Summer Floral Dress',
-                      wishes: 32,
-                      sizes: ['S', 'M', 'L'],
-                      colors: [Colors.pink, Colors.blue, Colors.amber],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _buildWishlistItem(
-                      image: 'assets/denim_jacket.png',
-                      name: 'Denim Jacket',
-                      wishes: 28,
-                      sizes: ['M', 'L', 'XL'],
-                      colors: [Colors.blue, Colors.black],
-                    ),
                   ],
                 ),
               ),
-            ],
+            ),
+          ),
+
+          // Wishlist Content
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      // Summary Cards
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildSummaryCard(
+                              icon: Icons.favorite,
+                              value: _totalWishes.toString(),
+                              label: 'Total Wishes',
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildSummaryCard(
+                              icon: Icons.account_balance_wallet,
+                              value: 'Rs ${_potentialRevenue.toStringAsFixed(2)}',
+                              label: 'Potential Revenue',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Wishlist Items
+                      ..._products.map((product) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildWishlistItem(
+                          image: product['image_url'] ?? '',
+                          name: product['name'] ?? 'Unnamed Product',
+                          wishes: product['wish'] ?? 0,
+                          price: double.tryParse(product['price'].toString()) ?? 0.0,
+                          sizes: List<String>.from(product['sizes'] ?? []),
+                          colors: (product['colors'] as List?)?.map<Color>((c) => 
+                            Color(int.parse(c.toString().replaceAll('#', '0xFF'))))
+                            .toList() ?? [],
+                        ),
+                      )).toList(),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -200,6 +229,7 @@ class WishlistScreen extends StatelessWidget {
     required String image,
     required String name,
     required int wishes,
+    required double price,
     required List<String> sizes,
     required List<Color> colors,
   }) {
@@ -230,7 +260,7 @@ class WishlistScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
-                child: Image.asset(
+                child: Image.network(
                   image,
                   height: 80,
                   errorBuilder: (context, error, stackTrace) {

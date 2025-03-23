@@ -1,7 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:fiton_seller/services/shop_service.dart';
 
-class OrderScreen extends StatelessWidget {
-  const OrderScreen({super.key});
+class OrderScreen extends StatefulWidget {
+  final String shopId;
+
+  const OrderScreen({
+    super.key,
+    required this.shopId,
+  });
+
+  @override
+  State<OrderScreen> createState() => _OrderScreenState();
+}
+
+class _OrderScreenState extends State<OrderScreen> {
+  late SupabaseService _supabaseService;
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _orders = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _supabaseService = SupabaseService(Supabase.instance.client);
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    try {
+      final orders = await _supabaseService.getRecentOrders(widget.shopId, limit: 10);
+      setState(() {
+        _orders = orders;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading orders: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

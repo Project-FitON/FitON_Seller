@@ -1,5 +1,6 @@
 import 'package:fiton_seller/screens/shop/notification_screen.dart';
 import 'package:flutter/material.dart';
+import '../settings/settings_screen.dart';
 import 'package:supabase/supabase.dart';
 import 'package:supabase/supabase.dart' as _currentShop;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -181,7 +182,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.notifications),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
 
                           // Quick Actions Row
                           Row(

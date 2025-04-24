@@ -1,5 +1,6 @@
 import 'package:fiton_seller/screens/income/income_screen.dart';
 import 'package:fiton_seller/screens/orders/orders_screen.dart';
+import 'package:fiton_seller/screens/shop/shop_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fiton_seller/screens/add_products/add_product_screen.dart';
 import 'package:fiton_seller/screens/dashboard/dashboard_screen.dart';
@@ -19,7 +20,7 @@ class _NavScreenState extends State<NavScreen> {
     const OrderScreen(),
     const Center(child: Text('Income')), // Placeholder
     const IncomeScreen(),
-    const Center(child: Text('Shop')), // Added a placeholder for Shop
+    const ShopScreen(),// Added a placeholder for Shop
   ];
 
   void _onItemTapped(int index) {

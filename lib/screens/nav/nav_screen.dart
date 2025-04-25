@@ -20,7 +20,7 @@ class _NavScreenState extends State<NavScreen> {
     const OrderScreen(),
     const Center(child: Text('Income')), // Placeholder
     const IncomeScreen(),
-    const ShopScreen(),// Added a placeholder for Shop
+    const ShopScreen(), // Added a placeholder for Shop
   ];
 
   void _onItemTapped(int index) {
@@ -28,9 +28,10 @@ class _NavScreenState extends State<NavScreen> {
       // Open AddProductScreen without changing nav state
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const AddProductScreen()),
+        MaterialPageRoute(builder: (context) => const AddProductPage()),
       );
-    } else if (index < _screens.length) { // Prevent out-of-range index
+    } else if (index < _screens.length) {
+      // Prevent out-of-range index
       setState(() {
         _selectedIndex = index;
       });
@@ -75,10 +76,7 @@ class _NavScreenState extends State<NavScreen> {
                   shape: BoxShape.circle,
                 ),
                 padding: const EdgeInsets.all(12),
-                child: const Icon(
-                  Icons.add,
-                  color: Colors.white,
-                ),
+                child: const Icon(Icons.add, color: Colors.white),
               ),
               label: '',
             ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class WishlistScreen extends StatelessWidget {
-  const WishlistScreen({Key? key}) : super(key: key);
+  const WishlistScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,13 +15,14 @@ class WishlistScreen extends StatelessWidget {
             height: 140, // Increased height to account for status bar
             decoration: const BoxDecoration(
               color: Color(0xFF1A0038), // Dark purple
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-              ),
+              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(40)),
             ),
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -54,13 +55,13 @@ class WishlistScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 2,
+                          ),
                           child: const Text(
                             '5 New Wishes',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
+                            style: TextStyle(color: Colors.white, fontSize: 12),
                           ),
                         ),
                       ],
@@ -149,11 +150,7 @@ class WishlistScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            color: const Color(0xFF1A0038),
-            size: 32,
-          ),
+          Icon(icon, color: const Color(0xFF1A0038), size: 32),
           const SizedBox(height: 10),
           Text(
             value,
@@ -166,10 +163,7 @@ class WishlistScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
-            ),
+            style: TextStyle(color: Colors.grey[600], fontSize: 12),
             textAlign: TextAlign.center,
           ),
         ],
@@ -216,7 +210,9 @@ class WishlistScreen extends StatelessWidget {
                   height: 80,
                   errorBuilder: (context, error, stackTrace) {
                     return Icon(
-                      name.contains('Dress') ? Icons.female : Icons.accessibility,
+                      name.contains('Dress')
+                          ? Icons.female
+                          : Icons.accessibility,
                       size: 40,
                       color: Colors.grey[400],
                     );
@@ -247,18 +243,11 @@ class WishlistScreen extends StatelessWidget {
                   // Wishes Count
                   Row(
                     children: [
-                      Icon(
-                        Icons.people,
-                        size: 14,
-                        color: Colors.grey[500],
-                      ),
+                      Icon(Icons.people, size: 14, color: Colors.grey[500]),
                       const SizedBox(width: 4),
                       Text(
                         '$wishes wishes',
-                        style: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
                     ],
                   ),
@@ -267,9 +256,7 @@ class WishlistScreen extends StatelessWidget {
 
                   // Size Options
                   Row(
-                    children: [
-                      ...sizes.map((size) => _buildSizeOption(size)),
-                    ],
+                    children: [...sizes.map((size) => _buildSizeOption(size))],
                   ),
 
                   const SizedBox(height: 12),
@@ -301,10 +288,7 @@ class WishlistScreen extends StatelessWidget {
       child: Center(
         child: Text(
           size,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[800],
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey[800]),
         ),
       ),
     );
@@ -315,10 +299,7 @@ class WishlistScreen extends StatelessWidget {
       margin: const EdgeInsets.only(right: 8),
       width: 24,
       height: 24,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }

@@ -8,16 +8,23 @@ class ShopScreen extends StatefulWidget {
   State<ShopScreen> createState() => _ShopScreenState();
 }
 
-class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateMixin {
+class _ShopScreenState extends State<ShopScreen>
+    with SingleTickerProviderStateMixin {
   int _selectedCategoryIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
   // App theme colors
-  final Color _headerBackgroundColor = const Color(0xFF1B0331); // Dark purple for header
+  final Color _headerBackgroundColor = const Color(
+    0xFF1B0331,
+  ); // Dark purple for header
   final Color _contentBackgroundColor = Colors.white; // White for content area
-  final Color _primaryPurple = const Color(0xFF341259); // Main purple for selected items
-  final Color _accentPurple = const Color(0xFF4D1E7F); // Lighter purple for buttons/accents
+  final Color _primaryPurple = const Color(
+    0xFF341259,
+  ); // Main purple for selected items
+  final Color _accentPurple = const Color(
+    0xFF4D1E7F,
+  ); // Lighter purple for buttons/accents
 
   final List<Map<String, dynamic>> _categories = [
     {'icon': FontAwesomeIcons.shapes, 'label': 'All'},
@@ -28,22 +35,10 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
   ];
 
   final List<Map<String, dynamic>> _clothingItems = [
-    {
-      'image': 'assets/images/casual_1.jpg',
-      'isFeatured': false,
-    },
-    {
-      'image': 'assets/images/casual_2.jpg',
-      'isFeatured': true,
-    },
-    {
-      'image': 'assets/images/casual_3.jpg',
-      'isFeatured': false,
-    },
-    {
-      'image': 'assets/images/casual_4.jpg',
-      'isFeatured': false,
-    },
+    {'image': 'assets/images/casual_1.jpg', 'isFeatured': false},
+    {'image': 'assets/images/casual_2.jpg', 'isFeatured': true},
+    {'image': 'assets/images/casual_3.jpg', 'isFeatured': false},
+    {'image': 'assets/images/casual_4.jpg', 'isFeatured': false},
   ];
 
   @override
@@ -54,10 +49,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
       duration: const Duration(milliseconds: 300),
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
   }
@@ -165,11 +157,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
         color: Colors.transparent,
         border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
-      child: Icon(
-        icon,
-        color: Colors.white,
-        size: 16,
-      ),
+      child: Icon(icon, color: Colors.white, size: 16),
     );
   }
 
@@ -200,17 +188,23 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                     decoration: BoxDecoration(
                       color: isSelected ? _primaryPurple : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: isSelected
-                          ? [BoxShadow(
-                        color: _primaryPurple.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      )]
-                          : null,
+                      boxShadow:
+                          isSelected
+                              ? [
+                                BoxShadow(
+                                  color: _primaryPurple.withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                              : null,
                     ),
                     child: Icon(
                       _categories[index]['icon'],
-                      color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                      color:
+                          isSelected
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.5),
                       size: 20,
                     ),
                   ),
@@ -218,9 +212,13 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                   Text(
                     _categories[index]['label'],
                     style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                      color:
+                          isSelected
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.5),
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.w500 : FontWeight.normal,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
@@ -279,7 +277,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
               itemBuilder: (context, index) {
                 final item = _clothingItems[index];
                 return Hero(
-                  tag: 'clothing_${index}',
+                  tag: 'clothing_$index',
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
@@ -303,10 +301,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              Image.asset(
-                                item['image'],
-                                fit: BoxFit.cover,
-                              ),
+                              Image.asset(item['image'], fit: BoxFit.cover),
                               if (item['isFeatured'])
                                 Positioned(
                                   right: 0,

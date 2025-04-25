@@ -1,3 +1,4 @@
+import 'package:fiton_seller/screens/add_products/add_product_screen.dart';
 import 'package:fiton_seller/screens/nav/nav_screen.dart'; // Import NavScreen
 import 'package:flutter/material.dart';
 
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.deepPurple,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const NavScreen(),  // ✅ Set NavScreen as the home screen
+      home: const AddProductPage(), // ✅ Set NavScreen as the home screen
     );
   }
 }

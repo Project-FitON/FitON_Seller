@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
 export "FLUTTER_ROOT=C:\Flutter\Src\flutter"
-export "FLUTTER_APPLICATION_PATH=C:\Users\visal\OneDrive\Desktop\Project FitOn\FitON_Seller"
+export "FLUTTER_APPLICATION_PATH=C:\Users\visal\OneDrive\Desktop\FitON_Seller-main"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_BUILD_DIR=build"
 export "FLUTTER_BUILD_NAME=1.0.0"

@@ -7,17 +7,15 @@ import '../../models/shop_model.dart';
 
 class ShopScreen extends StatefulWidget {
   final String shopId;
-  
-  const ShopScreen({
-    super.key,
-    required this.shopId,
-  });
+
+  const ShopScreen({super.key, required this.shopId});
 
   @override
   State<ShopScreen> createState() => _ShopScreenState();
 }
 
-class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateMixin {
+class _ShopScreenState extends State<ShopScreen>
+    with SingleTickerProviderStateMixin {
   int _selectedCategoryIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -27,10 +25,16 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
   Shop? _shopData;
 
   // App theme colors
-  final Color _headerBackgroundColor = const Color(0xFF1B0331); // Dark purple for header
+  final Color _headerBackgroundColor = const Color(
+    0xFF1B0331,
+  ); // Dark purple for header
   final Color _contentBackgroundColor = Colors.white; // White for content area
-  final Color _primaryPurple = const Color(0xFF341259); // Main purple for selected items
-  final Color _accentPurple = const Color(0xFF4D1E7F); // Lighter purple for buttons/accents
+  final Color _primaryPurple = const Color(
+    0xFF341259,
+  ); // Main purple for selected items
+  final Color _accentPurple = const Color(
+    0xFF4D1E7F,
+  ); // Lighter purple for buttons/accents
 
   final List<Map<String, dynamic>> _categories = [
     {'icon': FontAwesomeIcons.shapes, 'label': 'All'},
@@ -49,10 +53,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
       duration: const Duration(milliseconds: 300),
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _loadShopData();
     _loadProducts();
@@ -77,7 +78,10 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
     });
 
     try {
-      final category = _selectedCategoryIndex == 0 ? null : _categories[_selectedCategoryIndex]['label'];
+      final category =
+          _selectedCategoryIndex == 0
+              ? null
+              : _categories[_selectedCategoryIndex]['label'];
       final products = await _supabaseService.getShopProducts(
         category: category,
         sortBy: 'created_at',
@@ -137,12 +141,13 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
           Expanded(
             child: Container(
               color: _contentBackgroundColor,
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: _buildProductGrid(),
-                    ),
+              child:
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _buildProductGrid(),
+                      ),
             ),
           ),
         ],
@@ -158,12 +163,14 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
           CircleAvatar(
             radius: 24,
             backgroundColor: Colors.white,
-            backgroundImage: _shopData?.profilePhoto != null
-                ? NetworkImage(_shopData!.profilePhoto!)
-                : null,
-            child: _shopData?.profilePhoto == null
-                ? Image.asset('assets/images/logo.png', height: 32)
-                : null,
+            backgroundImage:
+                _shopData?.profilePhoto != null
+                    ? NetworkImage(_shopData!.profilePhoto!)
+                    : null,
+            child:
+                _shopData?.profilePhoto == null
+                    ? Image.asset('assets/images/logo.png', height: 32)
+                    : null,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -207,11 +214,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
         color: Colors.transparent,
         border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
-      child: Icon(
-        icon,
-        color: Colors.white,
-        size: 16,
-      ),
+      child: Icon(icon, color: Colors.white, size: 16),
     );
   }
 
@@ -242,17 +245,23 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                     decoration: BoxDecoration(
                       color: isSelected ? _primaryPurple : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: isSelected
-                          ? [BoxShadow(
-                        color: _primaryPurple.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      )]
-                          : null,
+                      boxShadow:
+                          isSelected
+                              ? [
+                                BoxShadow(
+                                  color: _primaryPurple.withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                              : null,
                     ),
                     child: Icon(
                       _categories[index]['icon'],
-                      color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                      color:
+                          isSelected
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.5),
                       size: 20,
                     ),
                   ),
@@ -260,9 +269,13 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                   Text(
                     _categories[index]['label'],
                     style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                      color:
+                          isSelected
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.5),
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.w500 : FontWeight.normal,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
@@ -279,9 +292,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
 
   Widget _buildProductGrid() {
     if (_products.isEmpty) {
-      return const Center(
-        child: Text('No products found'),
-      );
+      return const Center(child: Text('No products found'));
     }
 
     return GridView.builder(
@@ -296,7 +307,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
       itemBuilder: (context, index) {
         final product = _products[index];
         final isFeatured = product['is_featured'] ?? false;
-        
+
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -316,15 +327,44 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
               Expanded(
                 child: Stack(
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
-                        image: DecorationImage(
-                          image: NetworkImage(product['image_url'] ?? ''),
-                          fit: BoxFit.cover,
-                        ),
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      child: Image.network(
+                        (product['images'] as List?)?.firstOrNull?.toString() ??
+                            'https://via.placeholder.com/150',
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[100],
+                            child: Center(
+                              child: Icon(
+                                Icons.image_not_supported_outlined,
+                                color: Colors.grey[400],
+                                size: 32,
+                              ),
+                            ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: Colors.grey[100],
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     if (isFeatured)
